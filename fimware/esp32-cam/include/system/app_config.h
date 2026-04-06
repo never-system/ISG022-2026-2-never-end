@@ -23,7 +23,7 @@ static constexpr const char *kMqttHost = "mqtt.astrum.app.br";
 static constexpr uint16_t kMqttPort = 8883;
 static constexpr const char *kMqttUsername = "esp32";
 static constexpr const char *kMqttPassword = "esp32";
-static constexpr const char *kMqttLogsTopic = "devices/esp32/logs/dev";
+static constexpr const char *kMqttLogsTopic = "devices/esp32/logs";
 static constexpr uint32_t kMqttReconnectIntervalMs = 5000;
 static constexpr uint32_t kMqttSocketTimeoutSec = 5;
 
@@ -42,9 +42,13 @@ static constexpr const char *kPrefsNamespace = "cfg";
 static constexpr const char *kKeyWebhook = "webhook";
 static constexpr const char *kKeySsid = "ssid";
 static constexpr const char *kKeyPassword = "pwd";
+static constexpr const char *kKeyLedPower = "led_pwr";
+static constexpr const char *kKeyLedIntensity = "led_int";
 
 static constexpr const char *kDefaultSsid = "";
 static constexpr const char *kDefaultPassword = "";
+static constexpr bool kDefaultLedPower = false;
+static constexpr uint8_t kDefaultLedIntensity = 255;
 static constexpr const char *kDefaultWebhookUrl =
     "https://fronthook.astrum.app.br/hooks/01KKDEQPT7TQWB2ENM5S0SF5BC";
 

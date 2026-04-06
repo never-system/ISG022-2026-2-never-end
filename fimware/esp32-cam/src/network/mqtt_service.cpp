@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
+#include <string.h>
+
 #include "system/app_config.h"
 
 namespace {
@@ -12,6 +14,43 @@ WiFiClientSecure gTlsClient;
 PubSubClient gMqttClient(gTlsClient);
 uint32_t gLastConnectAttemptMs = 0;
 bool gStarted = false;
+mqtt_service::MqttMessageCallback gMessageCallback = nullptr;
+
+constexpr size_t kMaxSubscriptions = 8;
+constexpr size_t kMaxPayloadLen = 400;
+constexpr size_t kMaxTopicLen = 96;
+const char *gSubscriptions[kMaxSubscriptions]{};
+size_t gSubscriptionCount = 0;
+char gLogTopic[kMaxTopicLen] = {0};
+
+void onMqttMessage(char *topic, byte *payload, unsigned int length) {
+  if (gMessageCallback == nullptr || topic == nullptr) {
+    return;
+  }
+
+  if (length > kMaxPayloadLen) {
+    return;
+  }
+
+  char payloadBuffer[kMaxPayloadLen + 1];
+  if (length > 0 && payload != nullptr) {
+    memcpy(payloadBuffer, payload, length);
+  }
+  payloadBuffer[length] = '\0';
+  gMessageCallback(topic, payloadBuffer);
+}
+
+void applySubscriptions() {
+  if (!gMqttClient.connected()) {
+    return;
+  }
+
+  for (size_t i = 0; i < gSubscriptionCount; ++i) {
+    if (gSubscriptions[i] != nullptr) {
+      gMqttClient.subscribe(gSubscriptions[i]);
+    }
+  }
+}
 
 const char *levelTag(LogLevel level) {
   switch (level) {
@@ -51,7 +90,10 @@ void ensureConnected() {
   gLastConnectAttemptMs = now;
 
   String clientId = buildClientId();
-  gMqttClient.connect(clientId.c_str(), app::kMqttUsername, app::kMqttPassword);
+  bool connected = gMqttClient.connect(clientId.c_str(), app::kMqttUsername, app::kMqttPassword);
+  if (connected) {
+    applySubscriptions();
+  }
 }
 
 }  // namespace
@@ -64,6 +106,7 @@ void begin() {
 
   gMqttClient.setServer(app::kMqttHost, app::kMqttPort);
   gMqttClient.setBufferSize(512);
+  gMqttClient.setCallback(onMqttMessage);
   gStarted = true;
 
   ensureConnected();
@@ -82,6 +125,40 @@ void loop() {
 
 bool isConnected() { return gMqttClient.connected(); }
 
+void setMessageCallback(MqttMessageCallback callback) { gMessageCallback = callback; }
+
+void setLogTopic(const char *topic) {
+  if (topic == nullptr || topic[0] == '\0') {
+    gLogTopic[0] = '\0';
+    return;
+  }
+
+  snprintf(gLogTopic, sizeof(gLogTopic), "%s", topic);
+}
+
+bool subscribe(const char *topic) {
+  if (topic == nullptr || topic[0] == '\0') {
+    return false;
+  }
+
+  for (size_t i = 0; i < gSubscriptionCount; ++i) {
+    if (gSubscriptions[i] != nullptr && strcmp(gSubscriptions[i], topic) == 0) {
+      return true;
+    }
+  }
+
+  if (gSubscriptionCount >= kMaxSubscriptions) {
+    return false;
+  }
+
+  gSubscriptions[gSubscriptionCount++] = topic;
+  if (!gMqttClient.connected()) {
+    return true;
+  }
+
+  return gMqttClient.subscribe(topic);
+}
+
 void publishLog(LogLevel level, const char *message) {
   if (!gStarted || message == nullptr || message[0] == '\0') {
     return;
@@ -94,7 +171,8 @@ void publishLog(LogLevel level, const char *message) {
 
   char payload[300];
   snprintf(payload, sizeof(payload), "[%s] %s", levelTag(level), message);
-  gMqttClient.publish(app::kMqttLogsTopic, payload);
+  const char *targetTopic = gLogTopic[0] == '\0' ? app::kMqttLogsTopic : gLogTopic;
+  gMqttClient.publish(targetTopic, payload);
 }
 
 }  // namespace mqtt_service

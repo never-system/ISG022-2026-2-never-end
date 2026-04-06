@@ -14,6 +14,8 @@ void fillDefaults(AppConfig &cfg) {
   cfg.ssid = app::kDefaultSsid;
   cfg.password = app::kDefaultPassword;
   cfg.webhookUrl = app::kDefaultWebhookUrl;
+  cfg.ledPower = app::kDefaultLedPower;
+  cfg.ledIntensity = app::kDefaultLedIntensity;
 }
 
 }  // namespace
@@ -35,6 +37,8 @@ app::Status load(AppConfig &out) {
   out.ssid = gPrefs.getString(app::kKeySsid, app::kDefaultSsid);
   out.password = gPrefs.getString(app::kKeyPassword, app::kDefaultPassword);
   out.webhookUrl = gPrefs.getString(app::kKeyWebhook, app::kDefaultWebhookUrl);
+  out.ledPower = gPrefs.getBool(app::kKeyLedPower, app::kDefaultLedPower);
+  out.ledIntensity = gPrefs.getUChar(app::kKeyLedIntensity, app::kDefaultLedIntensity);
   gPrefs.end();
 
   if (!isWebhookValid(out.webhookUrl)) {
@@ -55,6 +59,8 @@ app::Status save(const AppConfig &cfg) {
   bool ok = gPrefs.putString(app::kKeySsid, cfg.ssid) > 0 || cfg.ssid.length() == 0;
   ok = ok && (gPrefs.putString(app::kKeyPassword, cfg.password) > 0 || cfg.password.length() == 0);
   ok = ok && gPrefs.putString(app::kKeyWebhook, cfg.webhookUrl) > 0;
+  ok = ok && gPrefs.putBool(app::kKeyLedPower, cfg.ledPower);
+  ok = ok && gPrefs.putUChar(app::kKeyLedIntensity, cfg.ledIntensity) > 0;
   gPrefs.end();
 
   return ok ? app::Status::kOk : app::Status::kStorageError;
@@ -74,6 +80,16 @@ app::Status setWifi(const String &ssid, const String &password, AppConfig &cfg) 
   }
   cfg.ssid = ssid;
   cfg.password = password;
+  return save(cfg);
+}
+
+app::Status setLedPower(bool power, AppConfig &cfg) {
+  cfg.ledPower = power;
+  return save(cfg);
+}
+
+app::Status setLedIntensity(uint8_t intensity, AppConfig &cfg) {
+  cfg.ledIntensity = intensity;
   return save(cfg);
 }
 

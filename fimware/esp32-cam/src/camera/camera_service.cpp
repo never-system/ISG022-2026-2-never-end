@@ -1,10 +1,29 @@
 #include "camera/camera_service.h"
 
+#include <Arduino.h>
+
 #include "board_config.h"
+#include "camera_pins.h"
 #include "debug/logger.h"
 #include "system/app_config.h"
 
 namespace {
+
+constexpr uint8_t kLedPwmChannel = 7;
+constexpr uint8_t kLedPwmResolutionBits = 8;
+constexpr uint32_t kLedPwmFrequencyHz = 5000;
+
+bool gLedPwmReady = false;
+
+void ensureLedReady() {
+  if (gLedPwmReady) {
+    return;
+  }
+
+  ledcSetup(kLedPwmChannel, kLedPwmFrequencyHz, kLedPwmResolutionBits);
+  ledcAttachPin(LED_GPIO_NUM, kLedPwmChannel);
+  gLedPwmReady = true;
+}
 
 camera_config_t buildConfig() {
   camera_config_t cfg{};
@@ -73,6 +92,12 @@ app::Status init() {
   tuneSensor();
   LOGI("Camera inicializada");
   return app::Status::kOk;
+}
+
+void applyLedState(bool power, uint8_t intensity) {
+  ensureLedReady();
+  const uint32_t duty = power ? static_cast<uint32_t>(intensity) : 0;
+  ledcWrite(kLedPwmChannel, duty);
 }
 
 camera_fb_t *capture() { return esp_camera_fb_get(); }

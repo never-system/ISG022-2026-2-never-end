@@ -18,6 +18,8 @@ void printConfig(const AppConfig &cfg) {
   Serial.printf("SSID: %s\n", cfg.ssid.c_str());
   Serial.printf("PASS: %s\n", cfg.password.length() ? "***" : "<vazio>");
   Serial.printf("WEBHOOK: %s\n", cfg.webhookUrl.c_str());
+  Serial.printf("LED POWER: %s\n", cfg.ledPower ? "ON" : "OFF");
+  Serial.printf("LED INTENSITY: %u\n", static_cast<unsigned>(cfg.ledIntensity));
   Serial.printf("LOGS: %s\n", loggerIsEnabled() ? "ON" : "OFF");
 }
 
@@ -41,6 +43,13 @@ void printHelp() {
   Serial.println("SETWEBHOOK <url>");
   Serial.println("RESETCFG");
   Serial.println("LOG ON | LOG OFF");
+  Serial.println("MQTT BASE: devices/<device_id>/...");
+  Serial.println("MQTT WEBHOOK TOPIC: devices/<device_id>/config/webhook (url http/https)");
+  Serial.println("MQTT WIFI TOPIC: devices/<device_id>/config/wifi (payload: <ssid>|<password>)");
+  Serial.println("MQTT WIFI: faz rollback para credenciais anteriores se a nova conexao falhar");
+  Serial.println("MQTT LED POWER TOPIC: devices/<device_id>/config/led/power (flash on capture: on|off|1|0|true|false)");
+  Serial.println("MQTT LED INTENSITY TOPIC: devices/<device_id>/config/led/intensity (flash intensity 0..255)");
+  Serial.println("MQTT CAPTURE TOPIC: devices/<device_id>/commands/capture-photo (empty|capture|now|1|on|true)");
 }
 
 void handle(AppConfig &cfg) {
