@@ -8,13 +8,13 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/dev/IOT/never_dice/include",
-                "C:/dev/IOT/never_dice/src",
+                "C:/dev/Never Dice/never_dice_embedding/include",
+                "C:/dev/Never Dice/never_dice_embedding/src",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
-                "C:/dev/IOT/never_dice/.pio/libdeps/esp32cam/PubSubClient/src",
+                "C:/dev/Never Dice/never_dice_embedding/.pio/libdeps/esp32cam/PubSubClient/src",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                 "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
@@ -245,13 +245,13 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/dev/IOT/never_dice/include",
-                    "C:/dev/IOT/never_dice/src",
+                    "C:/dev/Never Dice/never_dice_embedding/include",
+                    "C:/dev/Never Dice/never_dice_embedding/src",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
-                    "C:/dev/IOT/never_dice/.pio/libdeps/esp32cam/PubSubClient/src",
+                    "C:/dev/Never Dice/never_dice_embedding/.pio/libdeps/esp32cam/PubSubClient/src",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include",
                     "C:/Users/gabri/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/esp_additions/freertos",
