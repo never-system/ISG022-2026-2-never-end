@@ -6,9 +6,12 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "elysia": "latest"
+    "elysia": "latest",
+    "mqtt": "^5.15.1",
+    "openai": "^6.34.0"
   },
   "devDependencies": {
+    "@types/mqtt": "^2.5.0",
     "bun-types": "latest"
   },
   "module": "src/index.js"
