@@ -7,6 +7,7 @@
 
 namespace serial_cli {
 
+void setMqttDeviceId(const String &deviceId);
 void printHelp();
 void handle(AppConfig &cfg);
 

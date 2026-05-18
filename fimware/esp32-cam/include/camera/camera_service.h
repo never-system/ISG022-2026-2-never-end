@@ -8,6 +8,7 @@
 namespace camera_service {
 
 app::Status init();
+bool isReady();
 void applyLedState(bool power, uint8_t intensity);
 camera_fb_t *capture();
 void release(camera_fb_t *fb);

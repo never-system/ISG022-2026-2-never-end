@@ -17,6 +17,7 @@ namespace {
 AppConfig gConfig;
 RollDetector gRoll;
 uint32_t gLastEventMs = 0;
+uint32_t gLastCameraRetryMs = 0;
 
 String gMqttDeviceId;
 String gMqttLogsTopic;
@@ -188,6 +189,17 @@ bool restorePreviousWifiConfig(const String &previousSsid, const String &previou
   return true;
 }
 
+bool tryStartCamera() {
+  app::Status st = camera_service::init();
+  if (st == app::Status::kOk) {
+    camera_service::applyLedState(false, 0);
+    return true;
+  }
+
+  gLastCameraRetryMs = millis();
+  return false;
+}
+
 void applyWifiConfigWithRollback(const String &newSsid, const String &newPassword) {
   const String previousSsid = gConfig.ssid;
   const String previousPassword = gConfig.password;
@@ -215,13 +227,19 @@ void sendRollEvent(const RollMetrics &metrics) {
     return;
   }
 
-  const bool flashEnabled = gConfig.ledPower && gConfig.ledIntensity > 0;
+  if (!camera_service::isReady()) {
+    LOGW("Camera indisponivel, tentando inicializar antes do evento");
+    tryStartCamera();
+  }
+
+  const bool cameraReady = camera_service::isReady();
+  const bool flashEnabled = cameraReady && gConfig.ledPower && gConfig.ledIntensity > 0;
   if (flashEnabled) {
     camera_service::applyLedState(true, gConfig.ledIntensity);
     delay(250);
   }
 
-  camera_fb_t *fb = camera_service::capture();
+  camera_fb_t *fb = cameraReady ? camera_service::capture() : nullptr;
 
   // Desliga o LED imediatamente apos a captura para evitar ficar aceso
   // durante tentativas longas de upload/rede.
@@ -353,8 +371,7 @@ void setupConfig() {
 }
 
 void setupCamera() {
-  app::Status st = camera_service::init();
-  if (st != app::Status::kOk) {
+  if (!tryStartCamera()) {
     LOGE("Camera indisponivel, tentara novamente no loop");
   }
 }
@@ -388,6 +405,22 @@ void processRoll() {
   sendRollEvent(metrics);
 }
 
+void processCameraRetry() {
+  if (camera_service::isReady()) {
+    return;
+  }
+
+  uint32_t now = millis();
+  if (now - gLastCameraRetryMs < app::kCameraRetryIntervalMs) {
+    return;
+  }
+
+  LOGW("Tentando reinicializar camera");
+  if (!tryStartCamera()) {
+    LOGW("Camera ainda indisponivel");
+  }
+}
+
 }  // namespace
 
 void setup() {
@@ -395,6 +428,7 @@ void setup() {
   Serial.setDebugOutput(true);
   loggerInit(app::kLogsEnabledByDefault);
   setupMqttTopics();
+  serial_cli::setMqttDeviceId(gMqttDeviceId);
 
   setupConfig();
   gRoll.begin(app::kSw420Pin, app::kRollSettleMs);
@@ -417,6 +451,7 @@ void setup() {
 void loop() {
   serial_cli::handle(gConfig);
   mqtt_service::loop();
+  processCameraRetry();
   processRoll();
   delay(app::kLoopDelayMs);
 }

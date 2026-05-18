@@ -13,6 +13,7 @@ const String kCmdSetWebhook = "SETWEBHOOK ";
 const String kCmdSetSsid = "SETSSID ";
 const String kCmdSetPass = "SETPASS ";
 const size_t kMaxCmdLen = 256;
+String gMqttDeviceId;
 
 void printConfig(const AppConfig &cfg) {
   Serial.printf("SSID: %s\n", cfg.ssid.c_str());
@@ -31,9 +32,16 @@ bool startsWithIgnoreCase(const String &value, const String &prefix) {
   return lhs.startsWith(rhs);
 }
 
+String mqttTopic(const char *suffix) {
+  const String deviceId = gMqttDeviceId.length() > 0 ? gMqttDeviceId : "<device_id>";
+  return String("devices/") + deviceId + suffix;
+}
+
 }  // namespace
 
 namespace serial_cli {
+
+void setMqttDeviceId(const String &deviceId) { gMqttDeviceId = deviceId; }
 
 void printHelp() {
   Serial.println("Comandos:");
@@ -43,13 +51,16 @@ void printHelp() {
   Serial.println("SETWEBHOOK <url>");
   Serial.println("RESETCFG");
   Serial.println("LOG ON | LOG OFF");
-  Serial.println("MQTT BASE: devices/<device_id>/...");
-  Serial.println("MQTT WEBHOOK TOPIC: devices/<device_id>/config/webhook (url http/https)");
-  Serial.println("MQTT WIFI TOPIC: devices/<device_id>/config/wifi (payload: <ssid>|<password>)");
+  Serial.printf("MQTT BASE: %s\n", mqttTopic("/...").c_str());
+  Serial.printf("MQTT WEBHOOK TOPIC: %s (url http/https)\n", mqttTopic("/config/webhook").c_str());
+  Serial.printf("MQTT WIFI TOPIC: %s (payload: <ssid>|<password>)\n", mqttTopic("/config/wifi").c_str());
   Serial.println("MQTT WIFI: faz rollback para credenciais anteriores se a nova conexao falhar");
-  Serial.println("MQTT LED POWER TOPIC: devices/<device_id>/config/led/power (flash on capture: on|off|1|0|true|false)");
-  Serial.println("MQTT LED INTENSITY TOPIC: devices/<device_id>/config/led/intensity (flash intensity 0..255)");
-  Serial.println("MQTT CAPTURE TOPIC: devices/<device_id>/commands/capture-photo (empty|capture|now|1|on|true)");
+  Serial.printf("MQTT LED POWER TOPIC: %s (flash on capture: on|off|1|0|true|false)\n",
+                mqttTopic("/config/led/power").c_str());
+  Serial.printf("MQTT LED INTENSITY TOPIC: %s (flash intensity 0..255)\n",
+                mqttTopic("/config/led/intensity").c_str());
+  Serial.printf("MQTT CAPTURE TOPIC: %s (empty|capture|now|1|on|true)\n",
+                mqttTopic("/commands/capture-photo").c_str());
 }
 
 void handle(AppConfig &cfg) {

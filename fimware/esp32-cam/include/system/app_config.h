@@ -28,9 +28,11 @@ static constexpr uint32_t kMqttReconnectIntervalMs = 5000;
 static constexpr uint32_t kMqttSocketTimeoutSec = 5;
 
 static constexpr uint32_t kCameraXclkHz = 20000000;
-static constexpr int kCameraFrameSize = FRAMESIZE_UXGA;
-static constexpr int kCameraJpegQualityNoPsram = 6;
-static constexpr int kCameraJpegQualityPsram = 6;
+static constexpr uint32_t kCameraRetryIntervalMs = 5000;
+static constexpr int kCameraFrameSizeNoPsram = FRAMESIZE_VGA;
+static constexpr int kCameraFrameSizePsram = FRAMESIZE_XGA;
+static constexpr int kCameraJpegQualityNoPsram = 12;
+static constexpr int kCameraJpegQualityPsram = 10;
 static constexpr uint8_t kCameraFbCountNoPsram = 1;
 static constexpr uint8_t kCameraFbCountPsram = 2;
 

@@ -14,6 +14,7 @@ constexpr uint8_t kLedPwmResolutionBits = 8;
 constexpr uint32_t kLedPwmFrequencyHz = 5000;
 
 bool gLedPwmReady = false;
+bool gCameraReady = false;
 
 void ensureLedReady() {
   if (gLedPwmReady) {
@@ -26,6 +27,8 @@ void ensureLedReady() {
 }
 
 camera_config_t buildConfig() {
+  const bool hasPsram = psramFound();
+
   camera_config_t cfg{};
   cfg.ledc_channel = LEDC_CHANNEL_0;
   cfg.ledc_timer = LEDC_TIMER_0;
@@ -47,18 +50,17 @@ camera_config_t buildConfig() {
   cfg.pin_reset = RESET_GPIO_NUM;
   cfg.xclk_freq_hz = app::kCameraXclkHz;
   cfg.pixel_format = PIXFORMAT_JPEG;
-  cfg.frame_size = static_cast<framesize_t>(app::kCameraFrameSize);
+  cfg.frame_size = static_cast<framesize_t>(
+      hasPsram ? app::kCameraFrameSizePsram : app::kCameraFrameSizeNoPsram);
   cfg.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
-  cfg.fb_location = CAMERA_FB_IN_PSRAM;
+  cfg.fb_location = hasPsram ? CAMERA_FB_IN_PSRAM : CAMERA_FB_IN_DRAM;
   cfg.jpeg_quality = app::kCameraJpegQualityNoPsram;
   cfg.fb_count = app::kCameraFbCountNoPsram;
 
-  if (psramFound()) {
+  if (hasPsram) {
     cfg.jpeg_quality = app::kCameraJpegQualityPsram;
     cfg.fb_count = app::kCameraFbCountPsram;
     cfg.grab_mode = CAMERA_GRAB_LATEST;
-  } else {
-    cfg.fb_location = CAMERA_FB_IN_DRAM;
   }
   return cfg;
 }
@@ -74,7 +76,9 @@ void tuneSensor() {
     s->set_brightness(s, 1);
     s->set_saturation(s, -2);
   }
-  s->set_framesize(s, static_cast<framesize_t>(app::kCameraFrameSize));
+  s->set_framesize(s, static_cast<framesize_t>(
+                          psramFound() ? app::kCameraFrameSizePsram
+                                       : app::kCameraFrameSizeNoPsram));
 }
 
 }  // namespace
@@ -82,17 +86,25 @@ void tuneSensor() {
 namespace camera_service {
 
 app::Status init() {
+  if (gCameraReady) {
+    return app::Status::kOk;
+  }
+
   camera_config_t cfg = buildConfig();
   esp_err_t err = esp_camera_init(&cfg);
   if (err != ESP_OK) {
+    gCameraReady = false;
     LOGE("Camera init falhou: 0x%x", static_cast<unsigned>(err));
     return app::Status::kCameraError;
   }
 
   tuneSensor();
+  gCameraReady = true;
   LOGI("Camera inicializada");
   return app::Status::kOk;
 }
+
+bool isReady() { return gCameraReady; }
 
 void applyLedState(bool power, uint8_t intensity) {
   ensureLedReady();
@@ -100,7 +112,17 @@ void applyLedState(bool power, uint8_t intensity) {
   ledcWrite(kLedPwmChannel, duty);
 }
 
-camera_fb_t *capture() { return esp_camera_fb_get(); }
+camera_fb_t *capture() {
+  if (!gCameraReady) {
+    return nullptr;
+  }
+
+  camera_fb_t *fb = esp_camera_fb_get();
+  if (fb == nullptr) {
+    LOGW("Camera nao retornou frame");
+  }
+  return fb;
+}
 
 void release(camera_fb_t *fb) {
   if (fb != nullptr) {
