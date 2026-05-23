@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode
+.idea
+node_modules
+dist
+coverage
+*.log
+.env
+.env.*
+README.md
+eslint.config.js
+compose.yaml
