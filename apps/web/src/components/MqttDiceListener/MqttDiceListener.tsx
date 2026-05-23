@@ -53,7 +53,7 @@ export function MqttDiceListener() {
           outline: "#f8fafc",
           edge: "#d4a64c",
           texture: "stars",
-          material: "glass",
+          material: "metal",
         },
       });
 
@@ -166,29 +166,67 @@ export function MqttDiceListener() {
           <div className="title-rule" aria-hidden="true" />
         </header>
 
-        <section className="dice-orbit" aria-label="Area de rolagem de dados">
-          <div className="moon" aria-hidden="true" />
-          <div className="castle left" aria-hidden="true" />
-          <div className="castle right" aria-hidden="true" />
+        <div className="play-layout">
+          <section className="dice-orbit" aria-label="Area de rolagem de dados">
+            <div className="arena">
+              <div className="table-sigil" aria-hidden="true" />
+              <div
+                id="dice-box"
+                className="dice-canvas"
+                aria-label="Canvas 3D de rolagem de dados"
+              />
 
-          <div className="arena">
-            <div
-              id="dice-box"
-              className="dice-canvas"
-              aria-label="Canvas 3D de rolagem de dados"
-            />
+              {currentRoll && !rolling && (
+                <div className="result-medallion" aria-live="polite">
+                  <span>Resultado</span>
+                  <strong>{currentRoll.result}</strong>
+                  <p>
+                    {currentRoll.player} · {currentRoll.dice}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
-            {currentRoll && !rolling && (
-              <div className="result-medallion" aria-live="polite">
-                <span>Resultado</span>
-                <strong>{currentRoll.result}</strong>
-                <p>
-                  {currentRoll.player} · {currentRoll.dice}
-                </p>
+          <aside className="chronicle-panel">
+            <div className="chronicle-heading">
+              <div>
+                <p>Historico</p>
+                <h2>Cronicas</h2>
               </div>
-            )}
-          </div>
-        </section>
+              <button type="button" onClick={() => setHistory([])}>
+                Limpar
+              </button>
+            </div>
+
+            <div className="chronicle-list">
+              {!history[0] ? (
+                <div className="empty-chronicle">
+                  <strong>Nenhuma jogada</strong>
+                  <span>As rolagens aparecerao nestas cronicas.</span>
+                </div>
+              ) : (
+                history.map((roll) => (
+                  <article className="chronicle-item" key={roll.id}>
+                    <div>
+                      <strong>{roll.player}</strong>
+                      <span>{roll.dice}</span>
+                    </div>
+                    <div>
+                      <strong>{roll.result}</strong>
+                      <time>
+                        {roll.timestamp.toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </aside>
+        </div>
 
         <footer className="command-plaque">
           <div className={`mqtt-status ${connection.className}`}>
@@ -203,45 +241,6 @@ export function MqttDiceListener() {
           {queueSize > 0 && <strong>{queueSize} na fila</strong>}
         </footer>
       </section>
-
-      <aside className="chronicle-panel">
-        <div className="chronicle-heading">
-          <div>
-            <p>Historico</p>
-            <h2>Cronicas</h2>
-          </div>
-          <button type="button" onClick={() => setHistory([])}>
-            Limpar
-          </button>
-        </div>
-
-        <div className="chronicle-list">
-          {!history[0] ? (
-            <div className="empty-chronicle">
-              <strong>Aguardando rolagens</strong>
-              <span>Mensagens MQTT em dice/roll entram aqui.</span>
-            </div>
-          ) : (
-            history.map((roll) => (
-              <article className="chronicle-item" key={roll.id}>
-                <div>
-                  <strong>{roll.player}</strong>
-                  <span>{roll.dice}</span>
-                </div>
-                <div>
-                  <strong>{roll.result}</strong>
-                  <time>
-                    {roll.timestamp.toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
-      </aside>
 
       {error && (
         <div className="error-banner" role="alert">
