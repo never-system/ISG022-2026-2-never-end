@@ -12,15 +12,23 @@ export class ProcessImageService {
   }
 
   async uploadImage(image: File): Promise<string> {
+    console.log("Uploading image to S3...");
     const buffer = await image.arrayBuffer();
 
     const key = `uploads/${Date.now()}-${image.name}`;
     const s3File = this.s3Client.file(key);
 
-    await s3File.write(buffer, {
-      type: image.type,
-      contentDisposition: `inline; filename="${encodeURIComponent(image.name)}"`,
-    });
+    try {
+      await s3File.write(buffer, {
+        type: image.type,
+        contentDisposition: `inline; filename="${encodeURIComponent(image.name)}"`,
+      });
+      console.log("Image uploaded to S3 with key:", key);
+    } catch (error) {
+      console.error("Failed to upload image to S3:", error);
+      throw error;
+    }
+
     const imageUrl = s3File.presign({
       method: "GET",
       expiresIn: 3600,
