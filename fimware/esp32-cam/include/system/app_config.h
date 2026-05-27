@@ -36,6 +36,10 @@ static constexpr int kCameraJpegQualityPsram = 10;
 static constexpr uint8_t kCameraFbCountNoPsram = 1;
 static constexpr uint8_t kCameraFbCountPsram = 2;
 
+static constexpr uint16_t kStreamPort = 80;
+static constexpr uint32_t kStreamFrameIntervalMs = 150;
+static constexpr uint8_t kStreamLedIntensity = 50;
+
 static constexpr uint32_t kSerialBaud = 115200;
 
 static constexpr bool kLogsEnabledByDefault = true;

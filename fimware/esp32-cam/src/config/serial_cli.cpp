@@ -2,6 +2,7 @@
 
 #include "config/config_store.h"
 #include "debug/logger.h"
+#include "network/stream_service.h"
 
 namespace {
 
@@ -12,6 +13,9 @@ const String kCmdLogOff = "LOG OFF";
 const String kCmdSetWebhook = "SETWEBHOOK ";
 const String kCmdSetSsid = "SETSSID ";
 const String kCmdSetPass = "SETPASS ";
+const String kCmdStreamOn = "STREAM ON";
+const String kCmdStreamOff = "STREAM OFF";
+const String kCmdStreamStatus = "STREAM STATUS";
 const size_t kMaxCmdLen = 256;
 String gMqttDeviceId;
 
@@ -22,6 +26,8 @@ void printConfig(const AppConfig &cfg) {
   Serial.printf("LED POWER: %s\n", cfg.ledPower ? "ON" : "OFF");
   Serial.printf("LED INTENSITY: %u\n", static_cast<unsigned>(cfg.ledIntensity));
   Serial.printf("LOGS: %s\n", loggerIsEnabled() ? "ON" : "OFF");
+  Serial.printf("STREAM: %s\n", stream_service::isEnabled() ? "ON" : "OFF");
+  Serial.printf("STREAM URL: %s\n", stream_service::streamUrl().c_str());
 }
 
 bool startsWithIgnoreCase(const String &value, const String &prefix) {
@@ -51,6 +57,7 @@ void printHelp() {
   Serial.println("SETWEBHOOK <url>");
   Serial.println("RESETCFG");
   Serial.println("LOG ON | LOG OFF");
+  Serial.println("STREAM ON | STREAM OFF | STREAM STATUS");
   Serial.printf("MQTT BASE: %s\n", mqttTopic("/...").c_str());
   Serial.printf("MQTT WEBHOOK TOPIC: %s (url http/https)\n", mqttTopic("/config/webhook").c_str());
   Serial.printf("MQTT WIFI TOPIC: %s (payload: <ssid>|<password>)\n", mqttTopic("/config/wifi").c_str());
@@ -61,6 +68,8 @@ void printHelp() {
                 mqttTopic("/config/led/intensity").c_str());
   Serial.printf("MQTT CAPTURE TOPIC: %s (empty|capture|now|1|on|true)\n",
                 mqttTopic("/commands/capture-photo").c_str());
+  Serial.printf("MQTT STREAM TOPIC: %s (on|off|1|0|true|false)\n",
+                mqttTopic("/commands/stream").c_str());
 }
 
 void handle(AppConfig &cfg) {
@@ -96,6 +105,24 @@ void handle(AppConfig &cfg) {
   if (cmd.equalsIgnoreCase(kCmdLogOff)) {
     loggerSetEnabled(false);
     Serial.println("LOG OFF");
+    return;
+  }
+
+  if (cmd.equalsIgnoreCase(kCmdStreamOn)) {
+    stream_service::setEnabled(true);
+    Serial.printf("STREAM ON: %s\n", stream_service::streamUrl().c_str());
+    return;
+  }
+
+  if (cmd.equalsIgnoreCase(kCmdStreamOff)) {
+    stream_service::setEnabled(false);
+    Serial.println("STREAM OFF");
+    return;
+  }
+
+  if (cmd.equalsIgnoreCase(kCmdStreamStatus)) {
+    Serial.printf("STREAM: %s\n", stream_service::isEnabled() ? "ON" : "OFF");
+    Serial.printf("STREAM URL: %s\n", stream_service::streamUrl().c_str());
     return;
   }
 

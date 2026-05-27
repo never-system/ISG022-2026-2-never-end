@@ -8,6 +8,7 @@
 #include "debug/logger.h"
 #include "motor/roll_detector.h"
 #include "network/mqtt_service.h"
+#include "network/stream_service.h"
 #include "network/webhook_client.h"
 #include "network/wifi_service.h"
 #include "system/app_config.h"
@@ -28,6 +29,7 @@ String gMqttConfigLedPowerTopic;
 String gMqttConfigLedIntensityTopic;
 String gMqttCommandsTopicWildcard;
 String gMqttCommandCapturePhotoTopic;
+String gMqttCommandStreamTopic;
 
 String buildDeviceId() {
   uint64_t chipId = ESP.getEfuseMac();
@@ -51,6 +53,7 @@ void setupMqttTopics() {
   gMqttConfigLedIntensityTopic = configRoot + "/led/intensity";
   gMqttCommandsTopicWildcard = commandsRoot + "/#";
   gMqttCommandCapturePhotoTopic = commandsRoot + "/capture-photo";
+  gMqttCommandStreamTopic = commandsRoot + "/stream";
 }
 
 bool parseBoolPayload(const char *payload, bool &value) {
@@ -352,6 +355,17 @@ void handleMqttMessage(const char *topic, const char *payload) {
     return;
   }
 
+  if (strcmp(topic, gMqttCommandStreamTopic.c_str()) == 0) {
+    bool enabled = false;
+    if (!parseBoolPayload(payload, enabled)) {
+      LOGW("MQTT stream payload invalido: %s", payload);
+      return;
+    }
+
+    stream_service::setEnabled(enabled);
+    return;
+  }
+
   LOGD("MQTT topic ignorado: %s", topic);
 }
 
@@ -435,6 +449,7 @@ void setup() {
   setupCamera();
   camera_service::applyLedState(false, 0);
   setupNetwork();
+  stream_service::begin();
   mqtt_service::begin();
   mqtt_service::setLogTopic(gMqttLogsTopic.c_str());
   mqtt_service::setMessageCallback(handleMqttMessage);
@@ -451,6 +466,7 @@ void setup() {
 void loop() {
   serial_cli::handle(gConfig);
   mqtt_service::loop();
+  stream_service::loop();
   processCameraRetry();
   processRoll();
   delay(app::kLoopDelayMs);
