@@ -1,1 +1,0 @@
-# Architecture v1
