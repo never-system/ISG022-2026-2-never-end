@@ -1,20 +1,19 @@
 services:
   neverdice:
+    container_name: neverdice_web
     build:
       context: .
       dockerfile: Dockerfile
-    expose:
-      - "80"
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.neverdice.entrypoints=websecure"
       - "traefik.http.routers.neverdice.rule=Host(`${APP_HOST:?Defina APP_HOST para publicar o NeverDice}`)"
+      - "traefik.http.routers.neverdice.tls=true"
       - "traefik.http.services.neverdice.loadbalancer.server.port=80"
-      - "traefik.docker.network=${TRAEFIK_NETWORK:-proxy}"
     networks:
-      - traefik
+      - traefik_proxy
     restart: unless-stopped
 
 networks:
-  traefik:
+  traefik_proxy:
     external: true
-    name: "${TRAEFIK_NETWORK:-proxy}"
