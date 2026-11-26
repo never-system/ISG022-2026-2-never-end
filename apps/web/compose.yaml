@@ -1,3 +1,5 @@
+name: never_dice_web
+
 services:
   neverdice:
     container_name: neverdice_web
